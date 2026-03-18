@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             x:Class="VinhKhanhTour.MainPage">
+
+    <Grid>
+        <maps:Map x:Name="vinhKhanhMap"
+                  IsShowingUser="True" 
+                  MapType="Street"/>
+
+        <VerticalStackLayout VerticalOptions="Start" 
+                             Margin="15,50,15,0" 
+                             Spacing="10">
+
+            <Border x:Name="SingleSearchFrame"
+                    BackgroundColor="White" 
+                    StrokeShape="RoundRectangle 28"
+                    Padding="15,0,5,0" 
+                    HeightRequest="56"
+                    Stroke="#DCDCDC"
+                    IsVisible="True">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,3" Radius="10" Opacity="0.15"/>
+                </Border.Shadow>
+
+                <Grid ColumnDefinitions="*, Auto, Auto">
+                    <Entry x:Name="SingleEndEntry" 
+                           Placeholder="Tìm quán ăn, địa chỉ..." 
+                           PlaceholderColor="#757575"
+                           TextColor="#212121" 
+                           VerticalOptions="Center"
+                           FontSize="16"
+                           BackgroundColor="Transparent"
+                           ReturnType="Search"
+                           Completed="OnFindRouteClicked"/>
+
+                    <ImageButton Grid.Column="1" 
+                                 Source="ic_search.png" 
+                                 HeightRequest="24" 
+                                 WidthRequest="24"
+                                 Margin="8,0"
+                                 VerticalOptions="Center"
+                                 Clicked="OnFindRouteClicked"/>
+
+                    <BoxView Grid.Column="1" WidthRequest="1" BackgroundColor="#E0E0E0" Margin="40,12,0,12"/>
+
+                    <ImageButton Grid.Column="2" 
+                                 Source="ic_directions.png" 
+                                 Clicked="OnToggleDirectionsModeClicked"
+                                 HeightRequest="30" 
+                                 WidthRequest="30"
+                                 Margin="5,0,10,0"
+                                 VerticalOptions="Center"/>
+                </Grid>
+            </Border>
+
+            <Border x:Name="DirectionsFrame"
+                    BackgroundColor="White" 
+                    StrokeShape="RoundRectangle 20"
+                    Padding="12,15,12,12" 
+                    Stroke="#E0E0E0"
+                    IsVisible="False">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,5" Radius="15" Opacity="0.2"/>
+                </Border.Shadow>
+
+                <Grid ColumnDefinitions="Auto, *, Auto" RowDefinitions="Auto, Auto, Auto">
+                    <VerticalStackLayout Grid.Column="0" Grid.RowSpan="2" 
+                                         VerticalOptions="Center" Spacing="0" Margin="5,0,15,0">
+                        <BoxView BackgroundColor="#4285F4" WidthRequest="12" HeightRequest="12" CornerRadius="6"/>
+                        <BoxView BackgroundColor="#BDBDBD" WidthRequest="2" HeightRequest="25" HorizontalOptions="Center"/>
+                        <BoxView BackgroundColor="#EA4335" WidthRequest="12" HeightRequest="12" CornerRadius="2"/>
+                    </VerticalStackLayout>
+
+                    <Entry x:Name="StartEntry" 
+                           Grid.Column="1" Grid.Row="0"
+                           Placeholder="Điểm đi (để trống = vị trí GPS)" 
+                           PlaceholderColor="#9E9E9E"
+                           TextColor="Black" 
+                           HeightRequest="45"
+                           FontSize="15"
+                           Margin="0,0,0,5"/>
+
+                    <BoxView Grid.Row="0" Grid.Column="1" VerticalOptions="End" HeightRequest="1" BackgroundColor="#F5F5F5"/>
+
+                    <Entry x:Name="EndEntry" 
+                           Grid.Column="1" Grid.Row="1"
+                           Placeholder="Nhập điểm đến..." 
+                           PlaceholderColor="#9E9E9E"
+                           TextColor="Black" 
+                           HeightRequest="45"
+                           FontSize="15"
+                           ReturnType="Go"
+                           Completed="OnFindRouteClicked"/>
+
+                    <ImageButton Grid.Column="2" Grid.Row="0" 
+                                 Source="ic_close.png" 
+                                 Clicked="OnToggleDirectionsModeClicked"
+                                 HeightRequest="22" 
+                                 WidthRequest="22"
+                                 VerticalOptions="Start"
+                                 HorizontalOptions="End"
+                                 Margin="0,5,0,0"/>
+
+                    <Button Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2"
+                            Text="TÌM ĐƯỜNG" 
+                            Clicked="OnFindRouteClicked"
+                            BackgroundColor="#2196F3" 
+                            TextColor="White" 
+                            FontAttributes="Bold"
+                            FontSize="15"
+                            HeightRequest="50"
+                            CornerRadius="12" 
+                            Margin="0,15,0,0"/>
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+
+        <Border VerticalOptions="End" 
+                HorizontalOptions="Center" 
+                BackgroundColor="#CC000000" 
+                StrokeShape="RoundRectangle 20" 
+                Margin="0,0,0,30" 
+                Padding="15,8">
+            <Label x:Name="statusLabel"
+                   Text="Hệ thống sẵn sàng"
+                   TextColor="White"
+                   FontSize="12"
+                   FontAttributes="Italic"/>
+        </Border>
+    </Grid>
+</ContentPage>
