@@ -25,7 +25,7 @@ public partial class MainPage : ContentPage
         _ = StartTracking();
     }
 
-    // HÀM: Chuyển đổi giữa chế độ Tìm kiếm đơn giản và Chế độ chỉ đường
+    // HÀM: Chu yển đổi giữa chế độ Tìm kiếm đơn giản và Chế độ chỉ đường
     private void OnToggleDirectionsModeClicked(object sender, EventArgs e)
     {
         // Nếu có nội dung ở ô tìm kiếm đơn, tự động chuyển sang ô Điểm đến của khung chỉ đường
@@ -177,3 +177,4 @@ public partial class MainPage : ContentPage
 // CÁC CLASS MODEL: Dùng để hứng dữ liệu trả về từ JSON API
 public class OSRMResponse { [JsonProperty("routes")] public List<OSRMRoute> Routes { get; set; } }
 public class OSRMRoute { [JsonProperty("geometry")] public string Geometry { get; set; } [JsonProperty("distance")] public double Distance { get; set; } }
+//end of file
