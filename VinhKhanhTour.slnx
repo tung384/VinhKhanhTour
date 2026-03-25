@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="VinhKhanhTour/VinhKhanhTour.csproj" />
+  <Folder Name="/Solution Items/" />
+  <Project Path="VinhKhanhTour/VinhKhanhTour.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>
