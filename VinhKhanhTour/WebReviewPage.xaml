@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:VinhKhanhTour"
+             x:Class="VinhKhanhTour.WebReviewPage"
+             x:DataType="local:MainPage"
+             Title="Khám Phá Vĩnh Khánh">
+    <Grid RowDefinitions="Auto, *">
+        <VerticalStackLayout BackgroundColor="#F8F9FA" Padding="20" Spacing="5">
+            <Label Text="WEB REVIEW" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#2196F3"/>
+            <Label Text="Dữ liệu trực tuyến từ SQL Server" FontSize="14" HorizontalOptions="Center" TextColor="Gray"/>
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1" Padding="15">
+            <CollectionView ItemsSource="{Binding Restaurants}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="local:POI">
+                        <VerticalStackLayout Margin="0,0,0,30">
+                            <Border StrokeShape="RoundRectangle 15" HeightRequest="200" StrokeThickness="0">
+                                <Image Source="{Binding ImageUrl}" Aspect="AspectFill"/>
+                            </Border>
+                            <Label Text="{Binding Name}" FontSize="22" FontAttributes="Bold" Margin="0,15,0,5"/>
+                            <HorizontalStackLayout Spacing="8">
+                                <Image Source="ic_directions.png" HeightRequest="16" VerticalOptions="Center"/>
+                                <Label Text="{Binding Address}" TextColor="#1877F2" TextDecorations="Underline" FontSize="15">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAddressTapped" CommandParameter="{Binding .}"/>
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </HorizontalStackLayout>
+                            <Label Text="{Binding DescriptionVi}" Margin="0,12" TextColor="#444" FontSize="15" LineHeight="1.2"/>
+                            <Button Text=" 🔊  NGHE GIỚI THIỆU"
+                                    Clicked="OnSpeakClicked"
+                                    CommandParameter="{Binding .}"
+                                    BackgroundColor="#E7F3FF"
+                                    TextColor="#1877F2"
+                                    FontAttributes="Bold"
+                                    HorizontalOptions="Start"
+                                    HeightRequest="45"
+                                    CornerRadius="10"/>
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
+    </Grid>
+</ContentPage>
