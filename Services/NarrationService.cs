@@ -7,6 +7,7 @@ public class NarrationService
     private int _currentlyProcessingId = -1; // Theo dõi ID dang chu?n b? phát
     private bool _isProcessing = false;
     private readonly Queue<POITranslation> _audioQueue = new();
+    private CancellationTokenSource? _cts;
 
     public NarrationService()
     {
@@ -73,6 +74,8 @@ public class NarrationService
 
     public async Task PlayManualAsync(POITranslation translation)
     {
+        Stop();
+
         // Kiểm tra cài đặt từ Phase 6.1
         bool isTtsEnabled = Preferences.Default.Get("IsTtsEnabled", true);
         double volume = Preferences.Default.Get("TtsVolume", 1.0);
@@ -81,6 +84,7 @@ public class NarrationService
 
         _audioQueue.Clear();
         _lastPlayedPoiId = -1;
+        _cts = new CancellationTokenSource();
 
         try
         {
@@ -91,11 +95,23 @@ public class NarrationService
             {
                 Locale = locale,
                 Volume = (float)volume
-            });
+            }, _cts.Token);
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            System.Diagnostics.Debug.WriteLine($"TTS Error: {ex.Message}");
+            // Khi bị hủy, hệ thống sẽ im lặng một cách an toàn
         }
+    }
+
+    public void Stop()
+    {
+        if (_cts != null && !_cts.IsCancellationRequested)
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = null;
+        }
+        _audioQueue.Clear();
+        _isProcessing = false;
     }
 }

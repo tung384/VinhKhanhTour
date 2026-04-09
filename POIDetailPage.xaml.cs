@@ -57,6 +57,13 @@ public partial class POIDetailPage : ContentPage
         // Không cần truy vấn lại ở đây để tránh xung đột dữ liệu
     }
 
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        // Gửi lệnh ngắt âm thanh ngay khi trang bị đóng hoặc ẩn đi
+        _narrationService.Stop();
+    }
     private async void OnAudioBtnClicked(object sender, EventArgs e)
     {
         if (_currentTranslation != null)
