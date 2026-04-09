@@ -1,0 +1,21 @@
+<mct:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+           xmlns:mct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+           x:Class="OneSProject.Views.LanguagePopup"
+           x:Name="ThisPopup">
+    
+    <Border BackgroundColor="White" Padding="25" WidthRequest="320">
+        <Border.StrokeShape><RoundRectangle CornerRadius="20"/></Border.StrokeShape>
+        
+        <VerticalStackLayout Spacing="20">
+            <Label Text="SELECT LANGUAGE" FontAttributes="Bold" HorizontalOptions="Center" FontSize="18" TextColor="#D4AF37"/>
+            
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                <Button Grid.Row="0" Grid.Column="0" Text="Tiếng Việt" CommandParameter="vi" Clicked="OnLanguageSelected" HeightRequest="50"/>
+                <Button Grid.Row="0" Grid.Column="1" Text="English" CommandParameter="en" Clicked="OnLanguageSelected" HeightRequest="50"/>
+                <Button Grid.Row="1" Grid.Column="0" Text="한국어" CommandParameter="ko" Clicked="OnLanguageSelected" HeightRequest="50"/>
+                <Button Grid.Row="1" Grid.Column="1" Text="Français" CommandParameter="fr" Clicked="OnLanguageSelected" HeightRequest="50"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</mct:Popup>

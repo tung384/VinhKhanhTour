@@ -1,10 +1,10 @@
-using OneSProject.Models;
+Ôªøusing OneSProject.Models;
 
 public class NarrationService
 {
     private readonly ITextToSpeech _tts;
     private int _lastPlayedPoiId = -1;
-    private int _currentlyProcessingId = -1; // Theo dıi ID dang chu?n b? ph·t
+    private int _currentlyProcessingId = -1; // Theo d√µi ID dang chu?n b? ph√°t
     private bool _isProcessing = false;
     private readonly Queue<POITranslation> _audioQueue = new();
 
@@ -19,7 +19,7 @@ public class NarrationService
 
         foreach (var translation in translations)
         {
-            // CH?N NGAY L?P T?C: N?u ID dang ph·t, v?a ph·t xong, ho?c d„ n?m trong h‡ng d?i
+            // CH?N NGAY L?P T?C: N?u ID dang ph√°t, v?a ph√°t xong, ho?c d√£ n?m trong h√†ng d?i
             if (translation.POIId == _lastPlayedPoiId ||
                 translation.POIId == _currentlyProcessingId ||
                 _audioQueue.Any(p => p.POIId == translation.POIId))
@@ -42,14 +42,14 @@ public class NarrationService
         while (_audioQueue.Count > 0)
         {
             var current = _audioQueue.Dequeue();
-            _currentlyProcessingId = current.POIId; // –·nh d?u dang x? l˝ ngay khi l?y ra kh?i h‡ng d?i
+            _currentlyProcessingId = current.POIId; // √ê√°nh d?u dang x? l√Ω ngay khi l?y ra kh?i h√†ng d?i
 
             await SpeakAsync(current);
 
             _lastPlayedPoiId = current.POIId;
             _currentlyProcessingId = -1;
 
-            // ThÍm m?t kho?ng ngh? ng?n (500ms) d? Android TTS Engine k?p chuy?n tr?ng th·i
+            // Th√™m m?t kho?ng ngh? ng?n (500ms) d? Android TTS Engine k?p chuy?n tr?ng th√°i
             await Task.Delay(500);
         }
         _isProcessing = false;
@@ -62,7 +62,7 @@ public class NarrationService
             var locales = await _tts.GetLocalesAsync();
             var locale = locales.FirstOrDefault(l => l.Language.StartsWith(translation.LanguageCode, StringComparison.OrdinalIgnoreCase));
 
-            // S? d?ng CancellationToken d? ki?m so·t lu?ng n?u c?n (t˘y ch?n n‚ng cao)
+            // S? d?ng CancellationToken d? ki?m so√°t lu?ng n?u c?n (t√πy ch?n n√¢ng cao)
             await _tts.SpeakAsync(translation.AudioScript, new SpeechOptions { Locale = locale });
         }
         catch (Exception ex)
@@ -73,9 +73,29 @@ public class NarrationService
 
     public async Task PlayManualAsync(POITranslation translation)
     {
+        // Ki·ªÉm tra c√†i ƒë·∫∑t t·ª´ Phase 6.1
+        bool isTtsEnabled = Preferences.Default.Get("IsTtsEnabled", true);
+        double volume = Preferences.Default.Get("TtsVolume", 1.0);
+
+        if (!isTtsEnabled) return;
+
         _audioQueue.Clear();
-        _lastPlayedPoiId = -1; // Reset d? cho phÈp ph·t l?i ngay l?p t?c khi nh?n th? cÙng
-        await SpeakAsync(translation);
-        _lastPlayedPoiId = translation.POIId;
+        _lastPlayedPoiId = -1;
+
+        try
+        {
+            var locales = await _tts.GetLocalesAsync();
+            var locale = locales.FirstOrDefault(l => l.Language.StartsWith(translation.LanguageCode, StringComparison.OrdinalIgnoreCase));
+
+            await _tts.SpeakAsync(translation.DetailedDescription, new SpeechOptions
+            {
+                Locale = locale,
+                Volume = (float)volume
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TTS Error: {ex.Message}");
+        }
     }
 }

@@ -4,23 +4,21 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:OneSProject"
+    xmlns:res="clr-namespace:OneSProject.Resources.Languages"
     Shell.FlyoutBehavior="Disabled">
 
     <TabBar>
-        <Tab Title="Bản Đồ">
-            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" Route="MainPage" />
+        <Tab Title="{x:Static res:AppResources.TabMap}" Icon="map.png">
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
         </Tab>
-
-        <Tab Title="Cửa Hàng">
-            <ShellContent ContentTemplate="{DataTemplate local:POIListPage}" Route="POIListPage" />
+        <Tab Title="{x:Static res:AppResources.TabList}" Icon="list.png">
+            <ShellContent ContentTemplate="{DataTemplate local:POIListPage}" />
         </Tab>
-
-        <Tab Title="Quét QR">
-        <ShellContent ContentTemplate="{DataTemplate local:QRScannerPage}" />
+        <Tab Title="{x:Static res:AppResources.TabQR}" Icon="qr.png">
+            <ShellContent ContentTemplate="{DataTemplate local:QRScannerPage}" />
         </Tab>
-
-        <Tab Title="Tùy Chỉnh">
-        <ShellContent ContentTemplate="{DataTemplate local:AppSettings}" />
+        <Tab Title="{x:Static res:AppResources.TabSettings}" Icon="settings.png">
+            <ShellContent ContentTemplate="{DataTemplate local:AppSettings}" />
         </Tab>
     </TabBar>
 </Shell>

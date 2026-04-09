@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using OneSProject.Services;
+using CommunityToolkit.Maui;
 using ZXing.Net.Maui.Controls;
 
 namespace OneSProject
@@ -11,6 +12,7 @@ namespace OneSProject
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .UseMauiMaps()
                 .UseBarcodeReader()
                 .ConfigureFonts(fonts =>
