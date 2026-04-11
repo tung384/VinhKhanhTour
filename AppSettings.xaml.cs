@@ -12,6 +12,8 @@ public partial class AppSettings : ContentPage
 
         // Đặt trạng thái Switch dựa trên Preferences đã lưu
         DarkModeSwitch.IsToggled = Preferences.Default.Get("IsDarkMode", false);
+        TtsSwitch.IsToggled = Preferences.Default.Get("IsTtsEnabled", true);
+        VolumeSlider.Value = Preferences.Default.Get("TtsVolume", 1.0);
     }
 
     private async void OnLanguageClicked(object sender, EventArgs e)
@@ -29,13 +31,25 @@ public partial class AppSettings : ContentPage
         Preferences.Default.Set("IsDarkMode", e.Value);
     }
 
+    private void OnTtsToggled(object sender, ToggledEventArgs e)
+    {
+        // Lưu với tên khóa mới: IsTtsEnabled
+        Preferences.Default.Set("IsTtsEnabled", e.Value);
+    }
+
+    private void OnVolumeChanged(object sender, ValueChangedEventArgs e)
+    {
+        Preferences.Default.Set("TtsVolume", e.NewValue);
+    }
+
     private async void OnRecentPOIsClicked(object sender, EventArgs e)
     {
-        await DisplayAlert("System", "Data loading...", "OK");
+        // Chuyển hướng sang danh sách POI (Chúng ta sẽ lọc theo lịch sử sau)
+        await Shell.Current.GoToAsync("RecentHistoryPage");
     }
 
     private async void OnAppInfoClicked(object sender, EventArgs e)
     {
-        await DisplayAlert("OneSProject", "Version 1.0\nStark Industries Security Systems", "OK");
+        await DisplayAlert("Vinh Khanh Multilingual App", "Version 1.0\nStark Industries", "OK");
     }
 }

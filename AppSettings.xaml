@@ -40,6 +40,31 @@
         </Border>
 
         <Border StrokeShape="RoundRectangle 12" Padding="15" 
+        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
+        Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*, Auto">
+                    <HorizontalStackLayout Spacing="15" VerticalOptions="Center">
+                        <Label Text="🔊" FontSize="20"/>
+                        <Label Text="Thuyết minh tự động" 
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                               FontSize="16" VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                    <Switch x:Name="TtsSwitch" Grid.Column="1" 
+                            OnColor="#D4AF37" 
+                            Toggled="OnTtsToggled"/>
+                </Grid>
+        
+                <Label Text="Âm lượng" FontSize="12" TextColor="Gray" Margin="35,0,0,0"/>
+                <Slider x:Name="VolumeSlider" 
+                        Minimum="0" Maximum="1" 
+                        MinimumTrackColor="#D4AF37"
+                        ValueChanged="OnVolumeChanged"
+                        Margin="35,0,0,0"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <Border StrokeShape="RoundRectangle 12" Padding="15" 
                 BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"
                 Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#333333}">
             <Grid ColumnDefinitions="*, Auto">

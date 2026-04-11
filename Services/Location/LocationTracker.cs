@@ -9,9 +9,24 @@ namespace OneSProject.Services.Location
         private readonly GeofenceEngine _geo = new();
         private readonly DatabaseService _db = new();
         private readonly NarrationService _narrationService = new();
-        private readonly string _language = "vi"; // tạm thời
+        private string _language => Preferences.Get("SelectedLanguage", "vi");
+        private readonly HashSet<int> _playedPoiIds = new();
+        private const int MAX_POI = 2;
+        private bool _isPaused = false;
 
         private bool _isRunning = false;
+
+        public void Pause()
+        {
+            _isPaused = true;
+            System.Diagnostics.Debug.WriteLine("JARVIS: Tracker Paused");
+        }
+
+        public void Resume()
+        {
+            _isPaused = false;
+            System.Diagnostics.Debug.WriteLine("JARVIS: Tracker Resumed");
+        }
 
         public async Task StartAsync(List<POI> pois)
         {
@@ -19,31 +34,56 @@ namespace OneSProject.Services.Location
 
             while (_isRunning)
             {
+                if (_isPaused)
+                {
+                    await Task.Delay(1000);
+                    continue;
+                }
+
                 var location = await _gps.GetCurrentLocationAsync();
 
                 if (location != null)
                 {
-                    var (current, queue) = _geo.GetPrioritizedPOIs(location, pois);
+                    var prioritized = pois
+                    .Select(poi => new
+                    {
+                        Poi = poi,
+                        Distance = DistanceCalculator.Calculate(
+                            location.Latitude,
+                            location.Longitude,
+                            poi.Latitude,
+                            poi.Longitude)
+                    })
+                    .Where(x => x.Distance <= x.Poi.DetectionRadius) // ✅ trong phạm vi
+                    .OrderBy(x => x.Distance)
+                    .Take(MAX_POI) // ✅ chỉ lấy 1-2 POI
+                    .Select(x => x.Poi)
+                    .ToList();
 
-                    if (current != null && _geo.ShouldTrigger(current, location))
+                    if (prioritized.Count > 0)
                     {
                         var translations = new List<POITranslation>();
 
-                        // 1. Current POI
-                        var currentTranslation = await _db.GetTranslationAsync(current.Id, _language);
-                        if (currentTranslation != null)
-                            translations.Add(currentTranslation);
-
-                        // 2. Queue POIs
-                        foreach (var poi in queue)
+                        foreach (var poi in prioritized)
                         {
-                            var t = await _db.GetTranslationAsync(poi.Id, _language);
-                            if (t != null)
-                                translations.Add(t);
+                            // ✅ bỏ qua nếu đã phát
+                            if (_playedPoiIds.Contains(poi.Id))
+                                continue;
+
+                            var translation = await _db.GetTranslationAsync(poi.Id, _language);
+
+                            if (translation != null)
+                            {
+                                translations.Add(translation);
+                                _playedPoiIds.Add(poi.Id); // đánh dấu đã phát
+                            }
                         }
 
-                        // 3. Gửi sang Audio System (Member 4)
-                        await _narrationService.AddToQueueAsync(translations);
+                        // ✅ chỉ gọi khi có POI mới
+                        if (translations.Count > 0)
+                        {
+                            await _narrationService.AddToQueueAsync(translations);
+                        }
                     }
                 }
 

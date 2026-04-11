@@ -1,21 +1,15 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:OneSProject.Models"
-             xmlns:local="clr-namespace:OneSProject"
+             xmlns:res="clr-namespace:OneSProject.Resources.Languages"
              x:Class="OneSProject.POIDetailPage"
-             x:DataType="local:POIDetailPage" 
-             Title="Thông tin quán">
-    <ScrollView>
+             Title="{x:Static res:AppResources.Detail_Title}"> <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="15">
             <Label x:Name="NameLabel" FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" />
 
             <CarouselView x:Name="ImageCarousel" HeightRequest="250" HorizontalOptions="Center">
                 <CarouselView.ItemTemplate>
-                    <DataTemplate x:DataType="x:String">
-                        <Image Source="{Binding .}" 
-                               Aspect="AspectFill" 
-                               HeightRequest="250" 
-                               WidthRequest="350" />
+                    <DataTemplate>
+                        <Image Source="{Binding .}" Aspect="AspectFill" HeightRequest="250" WidthRequest="350" />
                     </DataTemplate>
                 </CarouselView.ItemTemplate>
             </CarouselView>
@@ -25,7 +19,7 @@
                 <Label x:Name="DetailedDescriptionLabel" FontSize="16" LineBreakMode="WordWrap" TextColor="#333333" />
             </Border>
 
-            <Button Text="🔊 Nghe thuyết minh"
+            <Button Text="{x:Static res:AppResources.Btn_Listen}"
                     Clicked="OnAudioBtnClicked"
                     BackgroundColor="#D4AF37"
                     TextColor="Black"

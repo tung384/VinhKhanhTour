@@ -13,7 +13,7 @@ public class POI
     public double Latitude { get; set; }
     public double Longitude { get; set; }
 
-    public double DetectionRadius { get; set; } = 5; // Mặc định 5m
+    public double DetectionRadius { get; set; } = 25; // Mặc định 5m
     public int Priority { get; set; } // Thứ tự ưu tiên (1, 2, 3...)
 
     public string MainImage { get; set; } = string.Empty; // Đường dẫn ảnh

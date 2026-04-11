@@ -74,6 +74,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Views\RecentHistoryPage.xaml.cs">
+	    <DependentUpon>RecentHistoryPage.xaml</DependentUpon>
+	  </Compile>
 	  <Compile Update="QRScannerPage.xaml.cs">
 	    <DependentUpon>QRScannerPage.xaml</DependentUpon>
 	  </Compile>
@@ -102,6 +105,9 @@
 
 	<ItemGroup>
 	  <MauiXaml Update="AppSettings.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\RecentHistoryPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Views\LanguagePopup.xaml">

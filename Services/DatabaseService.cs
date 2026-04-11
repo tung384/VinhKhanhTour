@@ -115,7 +115,7 @@ public class DatabaseService
     {
         if (_database == null) return;
         var count = await _database!.Table<Models.POI>().CountAsync();
-        if (count > 0) return; // Hệ thống đã có dữ liệu.
+        if (count >= 7) return; // Hệ thống đã có dữ liệu.
 
         // 1. Nạp danh sách POIs
         var samplePOIs = new List<Models.POI>
@@ -130,7 +130,7 @@ public class DatabaseService
         };
         await _database.InsertAllAsync(samplePOIs);
 
-        // 2. Nạp kịch bản đa ngôn ngữ (Ví dụ cho 2 gian hàng đầu)
+        // 2. Nạp kịch bản đa ngôn ngữ
         var translations = new List<Models.POITranslation>
         {
             // Ốc Oanh

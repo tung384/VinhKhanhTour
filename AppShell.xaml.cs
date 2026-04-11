@@ -1,4 +1,6 @@
-﻿namespace OneSProject
+﻿using OneSProject.Views;
+
+namespace OneSProject
 {
     public partial class AppShell : Shell
     {
@@ -7,6 +9,7 @@
             InitializeComponent();
             // Ðang ký route cho trang chi tiết
             Routing.RegisterRoute(nameof(POIDetailPage), typeof(POIDetailPage));
+            Routing.RegisterRoute("RecentHistoryPage", typeof(RecentHistoryPage));
         }
     }
 }

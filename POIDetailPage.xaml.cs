@@ -16,7 +16,7 @@ public partial class POIDetailPage : ContentPage
     public POIDetailPage(NarrationService narrationService)
     {
         InitializeComponent();
-        _narrationService = narrationService;
+        _narrationService = new NarrationService();
         _dbService = new DatabaseService();
     }
 
@@ -54,7 +54,8 @@ public partial class POIDetailPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        // Không cần truy vấn lại ở đây để tránh xung đột dữ liệu
+
+        MainPage.TrackerInstance?.Pause();
     }
 
     protected override void OnDisappearing()
@@ -63,6 +64,7 @@ public partial class POIDetailPage : ContentPage
 
         // Gửi lệnh ngắt âm thanh ngay khi trang bị đóng hoặc ẩn đi
         _narrationService.Stop();
+        MainPage.TrackerInstance?.Resume();
     }
     private async void OnAudioBtnClicked(object sender, EventArgs e)
     {

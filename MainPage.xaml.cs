@@ -11,6 +11,7 @@ namespace OneSProject
     {
         private DatabaseService _dbService;
         private LocationTracker? _tracker;
+        public static LocationTracker? TrackerInstance { get; private set; }
         public MainPage()
         {
             InitializeComponent();
@@ -34,6 +35,7 @@ namespace OneSProject
             if (_tracker == null && VinhKhanhMap.IsShowingUser)
             {
                 _tracker = new LocationTracker();
+                TrackerInstance = _tracker;
                 _ = _tracker.StartAsync(pois);
             }
         }
@@ -41,7 +43,6 @@ namespace OneSProject
         private async void CheckLocationPermissions()
         {
             PermissionStatus status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
-
             if (status != PermissionStatus.Granted)
             {
                 status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
@@ -49,53 +50,55 @@ namespace OneSProject
 
             if (status == PermissionStatus.Granted)
             {
-                // Khi có quyền, bản đồ sẽ tự động tìm vị trí người dùng
                 VinhKhanhMap.IsShowingUser = true;
-
+                // Đảm bảo Tracker khởi chạy ngay lập tức sau khi có quyền
                 if (_tracker == null)
                 {
+                    await _dbService.Init();
                     var pois = await _dbService.GetAllPOIsAsync();
-
                     _tracker = new LocationTracker();
                     _ = _tracker.StartAsync(pois);
+                    System.Diagnostics.Debug.WriteLine("JARVIS: Location Tracker has been activated.");
                 }
             }
         }
         private async Task LoadPOIsToMap()
         {
-            // 1. Lấy danh sách POI từ Database (Cần đảm bảo Thành viên 3 có hàm GetPOIsAsync, 
-            // hoặc viết trực tiếp truy vấn SQLite ở đây)
             var pois = await _dbService._database!.Table<POI>().ToListAsync();
-
-            // Xóa các điểm cũ nếu có
             VinhKhanhMap.Pins.Clear();
 
-            // 2. Tạo Pins và gắn lên bản đồ
+            // Lấy ngôn ngữ hiện tại từ Preferences
+            string lang = Preferences.Get("SelectedLanguage", "vi");
+
             foreach (var poi in pois)
             {
+                // Truy vấn bản dịch cho từng điểm để lấy tên và địa chỉ đã dịch
+                var translation = await _dbService.GetPOIWithTranslationAsync(poi.Id, lang);
+
                 var pin = new Pin
                 {
+                    // Nếu có bản dịch thì dùng Name trong bản dịch (nếu ngài có trường Name trong POITranslation)
+                    // Hoặc đơn giản là dùng chuỗi hướng dẫn từ AppResources
                     Label = poi.Name,
-                    Address = "Nhấn để xem chi tiết quầy", // Chú thích để người dùng biết
+                    Address = OneSProject.Resources.Languages.AppResources.TapToView,
                     Type = PinType.Place,
-                    Location = new Location(poi.Latitude, poi.Longitude)
+                    Location = new Location(poi.Latitude, poi.Longitude),
+                    BindingContext = poi
                 };
 
-                // 3. Gắn sự kiện khi người dùng click vào bong bóng thông tin
                 pin.InfoWindowClicked += OnPinInfoWindowClicked;
-
                 VinhKhanhMap.Pins.Add(pin);
-            }
 
-            // 4. Focus Camera về khu vực Vĩnh Khánh (Lấy tọa độ trung tâm mô phỏng)
-            if (pois.Count > 0)
-            {
-                // Tọa độ trung tâm Vĩnh Khánh (khoảng giữa Ốc Oanh và Lẩu Bò)
-                var centerLocation = new Location(10.7605, 106.7045);
-                // Bán kính hiển thị 300 mét
-                var mapSpan = MapSpan.FromCenterAndRadius(centerLocation, Distance.FromMeters(300));
+                // 4. Focus Camera về khu vực Vĩnh Khánh (Lấy tọa độ trung tâm mô phỏng)
+                if (pois.Count > 0)
+                {
+                    // Tọa độ trung tâm Vĩnh Khánh (khoảng giữa Ốc Oanh và Lẩu Bò)
+                    var centerLocation = new Location(10.7605, 106.7045);
+                    // Bán kính hiển thị 300 mét
+                    var mapSpan = MapSpan.FromCenterAndRadius(centerLocation, Distance.FromMeters(300));
 
-                VinhKhanhMap.MoveToRegion(mapSpan);
+                    VinhKhanhMap.MoveToRegion(mapSpan);
+                }
             }
         }
 
