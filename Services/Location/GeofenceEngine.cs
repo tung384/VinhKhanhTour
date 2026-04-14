@@ -5,7 +5,6 @@ namespace OneSProject.Services.Location
 {
     public class GeofenceEngine
     {
-        private const double GEOFENCE_RADIUS = 5.0; // meters
         private DateTime _lastTriggerTime = DateTime.MinValue;
         private readonly TimeSpan _cooldown = TimeSpan.FromSeconds(10);
 

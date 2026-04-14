@@ -30,6 +30,7 @@ namespace OneSProject.Services.Location
 
         public async Task StartAsync(List<POI> pois)
         {
+            await _db.Init();
             _isRunning = true;
 
             while (_isRunning)
