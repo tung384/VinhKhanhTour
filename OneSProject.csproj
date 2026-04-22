@@ -70,7 +70,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="ViewModels\" />
+		<Folder Include="ViewModels\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- CHANGE: exclude backend and CMS source trees from the MAUI app project build. -->
+		<Compile Remove="OneSBackend\**\*.cs" />
+		<EmbeddedResource Remove="OneSBackend\**\*" />
+		<None Remove="OneSBackend\**\*" />
+		<Content Remove="OneSBackend\**\*" />
+		<MauiXaml Remove="OneSBackend\**\*" />
+
+		<Compile Remove="cms-vinh-khanh\**\*" />
+		<EmbeddedResource Remove="cms-vinh-khanh\**\*" />
+		<None Remove="cms-vinh-khanh\**\*" />
+		<Content Remove="cms-vinh-khanh\**\*" />
+		<MauiXaml Remove="cms-vinh-khanh\**\*" />
 	</ItemGroup>
 
 	<ItemGroup>

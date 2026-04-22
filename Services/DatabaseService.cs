@@ -1,4 +1,5 @@
 using OneSProject.Models;
+using OneSProject.Models.DTOs;
 using Microsoft.Maui.Storage;
 using SQLite;
 
@@ -6,7 +7,8 @@ namespace OneSProject.Services;
 
 public class DatabaseService
 {
-    public SQLiteAsyncConnection? _database;
+    // CHANGE: keep the SQLite connection internal to the service.
+    private SQLiteAsyncConnection? _database;
 
     public async Task Init()
     {
@@ -66,24 +68,23 @@ public class DatabaseService
 
     // --- LOGIC TRUY VẤN ĐA NGÔN NGỮ ---
 
-    public async Task<POITranslation> GetPOIWithTranslationAsync(int poiId, string? langCode = null)
+    public async Task<POITranslation?> GetPOIWithTranslationAsync(int poiId, string? langCode = null)
     {
         await Init();
 
-        // Nếu langCode không được truyền vào, lấy từ Preferences (do Settings set)
-        string targetLang = langCode ?? Preferences.Get("SelectedLanguage", "vi");
+        string targetLang = NormalizeLanguageCode(langCode ?? Preferences.Get("SelectedLanguage", "vi"));
+        var translations = await _database!.Table<POITranslation>()
+            .Where(x => x.POIId == poiId)
+            .ToListAsync();
 
-        var translation = await _database!.Table<POITranslation>()
-            .FirstOrDefaultAsync(x => x.POIId == poiId && x.LanguageCode == targetLang);
-
-        // Fallback logic: Tìm tiếng Việt nếu không có ngôn ngữ yêu cầu
-        if (translation == null && targetLang != "vi")
+        if (translations.Count == 0)
         {
-            translation = await _database.Table<POITranslation>()
-                .FirstOrDefaultAsync(x => x.POIId == poiId && x.LanguageCode == "vi");
+            return null;
         }
 
-        return translation!;
+        return translations.FirstOrDefault(x => NormalizeLanguageCode(x.LanguageCode) == targetLang)
+            ?? translations.FirstOrDefault(x => NormalizeLanguageCode(x.LanguageCode) == "vi")
+            ?? translations.FirstOrDefault();
     }
 
     public async Task<POI?> GetPOIByQrCodeAsync(string qrCode)
@@ -101,7 +102,17 @@ public class DatabaseService
     public async Task<List<POI>> GetAllPOIsAsync()
     {
         await Init();
-        return await _database!.Table<POI>().ToListAsync();
+        return await _database!.Table<POI>()
+            .OrderBy(p => p.Priority)
+            .ToListAsync();
+    }
+
+    // CHANGE: pages now query POIs through the service instead of reaching into SQLite directly.
+    public async Task<POI?> GetPOIByIdAsync(int poiId)
+    {
+        await Init();
+        return await _database!.Table<POI>()
+            .FirstOrDefaultAsync(p => p.Id == poiId);
     }
 
     public async Task<List<string>> GetPOIImagesAsync(int poiId)
@@ -115,6 +126,8 @@ public class DatabaseService
     {
         if (_database == null) return;
         var count = await _database!.Table<Models.POI>().CountAsync();
+        // CHANGE: only seed the demo dataset for a brand-new local database with no synced content.
+        if (count > 0 || Preferences.Default.Get("ContentVersion", 0) > 0) return;
         if (count >= 7) return; // Hệ thống đã có dữ liệu.
 
         // 1. Nạp danh sách POIs
@@ -423,18 +436,125 @@ public class DatabaseService
     {
         await Init();
 
-        var result = await _database!.Table<POITranslation>()
-            .Where(t => t.POIId == poiId && t.LanguageCode == languageCode)
-            .FirstOrDefaultAsync();
+        var normalizedLanguageCode = NormalizeLanguageCode(languageCode);
+        var translations = await _database!.Table<POITranslation>()
+            .Where(t => t.POIId == poiId)
+            .ToListAsync();
 
-        // fallback về tiếng Việt
-        if (result == null)
+        return translations.FirstOrDefault(t => NormalizeLanguageCode(t.LanguageCode) == normalizedLanguageCode)
+            ?? translations.FirstOrDefault(t => NormalizeLanguageCode(t.LanguageCode) == "vi")
+            ?? translations.FirstOrDefault();
+    }
+    public async Task ClearAllDataAsync()
+    {
+        await Init();
+        await _database!.DeleteAllAsync<POITranslation>();
+        await _database.DeleteAllAsync<POIImage>();
+        await _database.DeleteAllAsync<POI>();
+        await _database.ExecuteAsync("DELETE FROM sqlite_sequence WHERE name IN ('POI', 'POIImage', 'POITranslation')");
+        System.Diagnostics.Debug.WriteLine("[DB] Toàn bộ dữ liệu cũ đã được xóa.");
+    }
+
+    public async Task InsertBulkDataAsync(List<POI> pois, List<POITranslation> translations, List<POIImage> images)
+    {
+        await Init();
+        if (pois.Any())
         {
-            result = await _database.Table<POITranslation>()
-                .Where(t => t.POIId == poiId && t.LanguageCode == "vi")
-                .FirstOrDefaultAsync();
+            foreach (var poi in pois)
+            {
+                await _database!.ExecuteAsync(
+                    "INSERT INTO POI (Id, Name, Latitude, Longitude, DetectionRadius, Priority, MainImage, QrCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    poi.Id,
+                    poi.Name,
+                    poi.Latitude,
+                    poi.Longitude,
+                    poi.DetectionRadius,
+                    poi.Priority,
+                    poi.MainImage,
+                    poi.QrCode);
+            }
+        }
+        if (translations.Any()) await _database!.InsertAllAsync(translations);
+        if (images.Any()) await _database!.InsertAllAsync(images);
+    }
+
+    // CHANGE: write the full backend payload into SQLite for offline-first usage.
+    public async Task ReplaceContentAsync(ContentDownloadDto content)
+    {
+        await Init();
+        await ClearAllDataAsync();
+
+        var pois = content.POIs.Select(p => new POI
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Latitude = p.Latitude,
+            Longitude = p.Longitude,
+            DetectionRadius = p.DetectionRadius,
+            Priority = p.Priority,
+            MainImage = p.MainImage ?? string.Empty,
+            QrCode = p.QrCode ?? string.Empty
+        }).ToList();
+
+        var translations = content.POIs
+            .SelectMany(p => p.Translations.Select(t => new POITranslation
+            {
+                POIId = p.Id,
+                LanguageCode = NormalizeLanguageCode(t.LanguageCode),
+                Description = t.Description ?? string.Empty,
+                DetailedDescription = t.DetailedDescription ?? t.Description ?? string.Empty,
+                AudioScript = t.AudioScript ?? t.DetailedDescription ?? t.Description ?? string.Empty
+            }))
+            .ToList();
+
+        var images = content.POIs
+            .SelectMany(p => BuildOrderedImageUrls(p.MainImage, p.Images).Select(url => new POIImage
+            {
+                POIId = p.Id,
+                FileName = url
+            }))
+            .ToList();
+
+        await InsertBulkDataAsync(pois, translations, images);
+
+        System.Diagnostics.Debug.WriteLine($"[DB] Synced POIs={pois.Count}, translations={translations.Count}, images={images.Count}");
+    }
+
+    private static string NormalizeLanguageCode(string? languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+        {
+            return "vi";
         }
 
-        return result;
+        var normalized = languageCode.Trim().ToLowerInvariant().Replace('_', '-');
+        var separatorIndex = normalized.IndexOf('-');
+        return separatorIndex >= 0 ? normalized[..separatorIndex] : normalized;
+    }
+
+    private static IEnumerable<string> BuildOrderedImageUrls(string? mainImage, IEnumerable<string>? imageUrls)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var ordered = new List<string?>();
+
+        if (!string.IsNullOrWhiteSpace(mainImage))
+        {
+            ordered.Add(mainImage);
+        }
+
+        if (imageUrls != null)
+        {
+            ordered.AddRange(imageUrls);
+        }
+
+        foreach (var imageUrl in ordered)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl) || !seen.Add(imageUrl))
+            {
+                continue;
+            }
+
+            yield return imageUrl;
+        }
     }
 }

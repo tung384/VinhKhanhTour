@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using OneSProject.Services;
+using OneSProject.Services.Location;
 using CommunityToolkit.Maui;
 using ZXing.Net.Maui.Controls;
 
@@ -24,9 +25,12 @@ namespace OneSProject
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
-            builder.Services.AddSingleton<Services.DatabaseService>();
+            // CHANGE: register one shared service graph for the offline-first mobile app.
+            builder.Services.AddSingleton<DatabaseService>();
+            builder.Services.AddSingleton<ApiService>();
+            builder.Services.AddSingleton<SyncService>();
             builder.Services.AddSingleton<NarrationService>();
-            builder.Services.AddTransient<POIDetailPage>();
+            builder.Services.AddSingleton<LocationTracker>();
             builder.Services.AddTransient<QRScannerPage>();
             return builder.Build();
         }

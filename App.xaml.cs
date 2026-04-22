@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using OneSProject.Resources.Languages;
 using OneSProject.Services;
 using System.Globalization;
@@ -7,9 +8,18 @@ namespace OneSProject
 {
     public partial class App : Application
     {
-        public static DatabaseService DatabaseService { get; set; } = new DatabaseService();
-        public App()
+        // CHANGE: expose the MAUI service provider so pages use one shared service graph.
+        public static IServiceProvider Services { get; private set; } = null!;
+        public static DatabaseService DatabaseService { get; private set; } = null!;
+
+        public static T GetService<T>() where T : notnull =>
+            Services.GetRequiredService<T>();
+
+        public App(IServiceProvider services)
         {
+            System.Diagnostics.Debug.WriteLine(Constants.DatabasePath);
+            Services = services;
+            DatabaseService = services.GetRequiredService<DatabaseService>();
             InitializeComponent();
             // 1.Đồng bộ ngôn ngữ ngay từ khi khởi động
             string lang = Preferences.Default.Get("SelectedLanguage", "vi");

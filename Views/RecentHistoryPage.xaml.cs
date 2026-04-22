@@ -5,17 +5,19 @@ namespace OneSProject.Views;
 
 public partial class RecentHistoryPage : ContentPage
 {
-    private readonly DatabaseService _dbService = new DatabaseService();
+    private readonly DatabaseService _dbService;
 
     public RecentHistoryPage()
     {
         InitializeComponent();
+
+        // CHANGE: history page now uses the shared local database service.
+        _dbService = App.GetService<DatabaseService>();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        // Thuật toán lấy 5 POI gần nhất đã được tích hợp trong DatabaseService
         var history = await _dbService.GetRecentPOIsAsync();
         HistoryCollection.ItemsSource = history;
     }
@@ -24,7 +26,6 @@ public partial class RecentHistoryPage : ContentPage
     {
         if (e.CurrentSelection.FirstOrDefault() is POI selected)
         {
-            // Điều hướng về trang chi tiết kèm theo ID
             await Shell.Current.GoToAsync($"{nameof(POIDetailPage)}?SelectedPOIId={selected.Id}");
             ((CollectionView)sender).SelectedItem = null;
         }

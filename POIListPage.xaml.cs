@@ -5,14 +5,20 @@ namespace OneSProject;
 
 public partial class POIListPage : ContentPage
 {
-    private DatabaseService _dbService = new DatabaseService();
-    public POIListPage() { InitializeComponent(); }
+    private readonly DatabaseService _dbService;
+
+    public POIListPage()
+    {
+        InitializeComponent();
+
+        // CHANGE: list page now uses the shared local database service.
+        _dbService = App.GetService<DatabaseService>();
+    }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _dbService.Init();
-        POICollection.ItemsSource = await _dbService.GetAllPOIsAsync(); // Gọi hàm của Mem 3
+        POICollection.ItemsSource = await _dbService.GetAllPOIsAsync();
     }
 
     private async void OnSelectionChanged(object sender, SelectionChangedEventArgs e)

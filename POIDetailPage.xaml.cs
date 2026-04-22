@@ -4,49 +4,67 @@ using OneSProject.Services;
 namespace OneSProject;
 
 [QueryProperty(nameof(POIId), "SelectedPOIId")]
+[QueryProperty(nameof(AutoPlay), "AutoPlay")]
 public partial class POIDetailPage : ContentPage
 {
     private readonly NarrationService _narrationService;
     private readonly DatabaseService _dbService;
     private POITranslation? _currentTranslation;
-    private int _id;
+    private bool _shouldAutoPlay;
 
-    public int POIId { set { _id = value; LoadData(value); } }
+    public int POIId
+    {
+        set => LoadData(value);
+    }
 
-    public POIDetailPage(NarrationService narrationService)
+    public string? AutoPlay
+    {
+        set
+        {
+            _shouldAutoPlay = string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+            if (_shouldAutoPlay && _currentTranslation != null)
+            {
+                _ = _narrationService.PlayManualAsync(_currentTranslation);
+            }
+        }
+    }
+
+    public POIDetailPage()
     {
         InitializeComponent();
-        _narrationService = new NarrationService();
-        _dbService = new DatabaseService();
+        _narrationService = App.GetService<NarrationService>();
+        _dbService = App.GetService<DatabaseService>();
     }
 
     private async void LoadData(int id)
     {
-        await _dbService.Init();
-
-        // 1. Lấy ngôn ngữ từ Preferences (Phase 6.1)
         string selectedLang = Preferences.Default.Get("SelectedLanguage", "vi");
 
-        // 2. Truy vấn đa ngôn ngữ (Đã có Fallback về 'vi' bên DatabaseService)
         _currentTranslation = await _dbService.GetPOIWithTranslationAsync(id, selectedLang);
-
-        // 3. Lấy thông tin gốc (Tên quán)
-        var poi = await _dbService._database!.Table<POI>().Where(p => p.Id == id).FirstOrDefaultAsync();
+        var poi = await _dbService.GetPOIByIdAsync(id);
 
         if (poi != null)
         {
             NameLabel.Text = poi.Name;
-            // Tự động lưu vào lịch sử (Phase 6.1 - Task 2)
             await _dbService.AddPOIToHistoryAsync(poi.Id);
         }
 
         if (_currentTranslation != null)
         {
-            // Hiển thị kịch bản chi tiết lên Border
-            DetailedDescriptionLabel.Text = _currentTranslation.DetailedDescription;
+            DetailedDescriptionLabel.Text = string.IsNullOrWhiteSpace(_currentTranslation.DetailedDescription)
+                ? _currentTranslation.Description
+                : _currentTranslation.DetailedDescription;
+
+            if (_shouldAutoPlay)
+            {
+                await _narrationService.PlayManualAsync(_currentTranslation);
+            }
+        }
+        else
+        {
+            DetailedDescriptionLabel.Text = string.Empty;
         }
 
-        // 4. Nạp ảnh
         var images = await _dbService.GetPOIImagesAsync(id);
         ImageCarousel.ItemsSource = images;
     }
@@ -54,23 +72,20 @@ public partial class POIDetailPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-
         MainPage.TrackerInstance?.Pause();
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-
-        // Gửi lệnh ngắt âm thanh ngay khi trang bị đóng hoặc ẩn đi
         _narrationService.Stop();
         MainPage.TrackerInstance?.Resume();
     }
+
     private async void OnAudioBtnClicked(object sender, EventArgs e)
     {
         if (_currentTranslation != null)
         {
-            // Sử dụng mô tả chi tiết làm kịch bản nói
             await _narrationService.PlayManualAsync(_currentTranslation);
         }
     }

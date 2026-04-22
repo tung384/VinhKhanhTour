@@ -3,7 +3,6 @@
              xmlns:models="clr-namespace:OneSProject.Models"
              xmlns:res="clr-namespace:OneSProject.Resources.Languages"
              x:Class="OneSProject.POIListPage" 
-             x:DataType="local:POIListPage"
              Title="{x:Static res:AppResources.ListHeader}">
              
     <CollectionView x:Name="POICollection" 

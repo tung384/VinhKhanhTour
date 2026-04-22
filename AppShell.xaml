@@ -8,16 +8,16 @@
     Shell.FlyoutBehavior="Disabled">
 
     <TabBar>
-        <Tab Title="{x:Static res:AppResources.TabMap}" Icon="map.png">
+        <Tab Title="{x:Static res:AppResources.TabMap}">
             <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
         </Tab>
-        <Tab Title="{x:Static res:AppResources.TabList}" Icon="list.png">
+        <Tab Title="{x:Static res:AppResources.TabList}">
             <ShellContent ContentTemplate="{DataTemplate local:POIListPage}" />
         </Tab>
-        <Tab Title="{x:Static res:AppResources.TabQR}" Icon="qr.png">
+        <Tab Title="{x:Static res:AppResources.TabQR}">
             <ShellContent ContentTemplate="{DataTemplate local:QRScannerPage}" />
         </Tab>
-        <Tab Title="{x:Static res:AppResources.TabSettings}" Icon="settings.png">
+        <Tab Title="{x:Static res:AppResources.TabSettings}">
             <ShellContent ContentTemplate="{DataTemplate local:AppSettings}" />
         </Tab>
     </TabBar>

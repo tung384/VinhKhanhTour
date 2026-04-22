@@ -5,24 +5,28 @@ namespace OneSProject;
 public partial class QRScannerPage : ContentPage
 {
     private readonly DatabaseService _dbService;
-    private bool _isNavigating = false; // Ngăn chặn việc quét trùng lặp khi đang điều hướng
+    private bool _isNavigating = false;
 
-    public QRScannerPage(DatabaseService dbService)
+    public QRScannerPage()
     {
         InitializeComponent();
-        _dbService = new DatabaseService();
+
+        // CHANGE: scanner now queries the same shared local database as the rest of the app.
+        _dbService = App.GetService<DatabaseService>();
 
         BarcodeReader.Options = new ZXing.Net.Maui.BarcodeReaderOptions
         {
             Formats = ZXing.Net.Maui.BarcodeFormat.QrCode,
             AutoRotate = true,
-            Multiple = false // Chỉ tập trung vào 1 mã duy nhất
+            Multiple = false
         };
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        _isNavigating = false;
+        await _dbService.Init();
         await CheckCameraPermissions();
     }
 
@@ -37,7 +41,7 @@ public partial class QRScannerPage : ContentPage
         if (status != PermissionStatus.Granted)
         {
             await DisplayAlert("Cảnh báo", "Ứng dụng cần quyền Camera để quét mã QR.", "OK");
-            await Shell.Current.GoToAsync(".."); // Quay lại trang trước nếu không cấp quyền
+            await Shell.Current.GoToAsync("..");
         }
     }
 
@@ -56,7 +60,6 @@ public partial class QRScannerPage : ContentPage
 
             if (poi != null)
             {
-                // Truyền thêm tham số AutoPlay=true để trang chi tiết tự động đọc thuyết minh
                 await Shell.Current.GoToAsync($"{nameof(POIDetailPage)}?SelectedPOIId={poi.Id}&AutoPlay=true");
             }
             else
