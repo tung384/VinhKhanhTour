@@ -24,6 +24,28 @@ const loadStoredSession = () => {
   }
 };
 
+const formatDashboardDateTime = (value) => {
+  if (!value) {
+    return 'N/A';
+  }
+
+  const normalizedValue = /z$/i.test(value) ? value : `${value}Z`;
+  const parsed = new Date(normalizedValue);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString('vi-VN', {
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+};
+
 function App() {
   const [session, setSession] = useState(loadStoredSession);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -397,7 +419,7 @@ function App() {
                     </td>
                     <td>{device.platform} / {device.appVersion || 'N/A'}</td>
                     <td>{device.ipAddress}</td>
-                    <td>{new Date(device.lastSeenAt).toLocaleString()}</td>
+                    <td>{formatDashboardDateTime(device.lastSeenAt)}</td>
                     <td>
                       <span className={`status-pill ${device.isOnline ? 'status-pill--active' : 'status-pill--inactive'}`}>
                         {device.isOnline ? 'Online' : 'Offline'}
@@ -430,7 +452,7 @@ function App() {
                     <td>{poi.poiName}</td>
                     <td>{poi.totalViews}</td>
                     <td>{poi.uniqueDevices}</td>
-                    <td>{poi.lastViewedAt ? new Date(poi.lastViewedAt).toLocaleString() : 'N/A'}</td>
+                    <td>{formatDashboardDateTime(poi.lastViewedAt)}</td>
                   </tr>
                 ))}
               </tbody>
