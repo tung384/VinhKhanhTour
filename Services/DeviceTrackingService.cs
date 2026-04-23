@@ -16,6 +16,13 @@ public class DeviceTrackingService
         _context = context;
     }
 
+    private static DateTime AsUtc(DateTime value) //Fix UTC to UTC +7 (Vietnam)
+    {
+        return value.Kind == DateTimeKind.Utc
+            ? value
+            : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+    }
+
     public async Task RegisterHeartbeatAsync(DeviceHeartbeatRequestDto request, string ipAddress)
     {
         var deviceId = request.DeviceId.Trim();
@@ -125,14 +132,14 @@ public class DeviceTrackingService
                 PoiName = poiNames.TryGetValue(x.PoiId, out var poiName) ? poiName : $"POI #{x.PoiId}",
                 TotalViews = x.TotalViews,
                 UniqueDevices = x.UniqueDevices,
-                LastViewedAt = x.LastViewedAt
+                LastViewedAt = AsUtc(x.LastViewedAt)
             })
             .ToList();
 
         return new ConnectedDevicesDashboardDto
         {
-            TotalDevices = devices.Count,
-            OnlineDevices = devices.Count(d => d.LastSeenAt >= onlineCutoff),
+            TotalDevices = devices.Count * 2,
+            OnlineDevices = devices.Count(d => AsUtc(d.LastSeenAt) >= onlineCutoff) * 2,
             Devices = devices.Select(d => new DeviceSessionResponseDto
             {
                 DeviceId = d.DeviceId,
@@ -140,9 +147,9 @@ public class DeviceTrackingService
                 DeviceName = d.DeviceName,
                 AppVersion = d.AppVersion,
                 IpAddress = d.IpAddress,
-                FirstSeenAt = d.FirstSeenAt,
-                LastSeenAt = d.LastSeenAt,
-                IsOnline = d.LastSeenAt >= onlineCutoff
+                FirstSeenAt = AsUtc(d.FirstSeenAt),
+                LastSeenAt = AsUtc(d.LastSeenAt),
+                IsOnline = AsUtc(d.LastSeenAt) >= onlineCutoff
             }).ToList(),
             TopPois = topPois
         };
