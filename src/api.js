@@ -75,3 +75,7 @@ export const ownerPoiService = {
     });
   }
 };
+
+export const deviceService = {
+  getDashboard: () => api.get('/admin/devices'),
+};

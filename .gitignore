@@ -22,11 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-node_modules/
-dist/
-.env
-
-bin/
-obj/
-.vs/

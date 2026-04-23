@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   accountService,
   authService,
+  deviceService,
   ownerPoiService,
   poiService,
   setAuthToken,
@@ -36,6 +37,7 @@ function App() {
   const [editingPoi, setEditingPoi] = useState(null);
   const [saving, setSaving] = useState(false);
   const [ownerPoi, setOwnerPoi] = useState(null);
+  const [deviceDashboard, setDeviceDashboard] = useState({ totalDevices: 0, onlineDevices: 0, devices: [], topPois: [] });
 
   const isAdmin = session?.role === 'Admin';
   const isOwner = session?.role === 'Owner';
@@ -62,6 +64,12 @@ function App() {
       loadOwnerPoi();
     }
   }, [isAdmin, isOwner]);
+
+  useEffect(() => {
+    if (isAdmin && currentTab === 'devices') {
+      loadDeviceDashboard();
+    }
+  }, [isAdmin, currentTab]);
 
   const handleApiFailure = (error) => {
     const status = error?.response?.status;
@@ -91,6 +99,7 @@ function App() {
     setOwnerPoi(null);
     setPois([]);
     setAccounts([]);
+    setDeviceDashboard({ totalDevices: 0, onlineDevices: 0, devices: [], topPois: [] });
   };
 
   const handleLogin = async (event) => {
@@ -149,6 +158,17 @@ function App() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDeviceDashboard = async () => {
+    try {
+      const response = await deviceService.getDashboard();
+      setDeviceDashboard(response.data);
+    } catch (error) {
+      if (!handleApiFailure(error)) {
+        console.error('Load device dashboard failed', error);
+      }
     }
   };
 
@@ -332,10 +352,91 @@ function App() {
 
     if (currentTab === 'devices') {
       return (
-        <div className="card">
-          <h1>Connected Devices</h1>
-          <p>This module is reserved for later deployment.</p>
-        </div>
+        <>
+          <header className="header-section">
+            <div>
+              <h1>Connected Devices</h1>
+              <p style={{ color: '#64748b' }}>Track mobile devices currently online and see which stalls are viewed the most.</p>
+            </div>
+            <button className="btn-secondary" onClick={loadDeviceDashboard}>Refresh</button>
+          </header>
+
+          <div className="device-stats-grid" style={{ marginBottom: '24px' }}>
+            <div className="card">
+              <h3 style={{ marginTop: 0 }}>Online now</h3>
+              <p className="device-stat">{deviceDashboard.onlineDevices}</p>
+            </div>
+            <div className="card">
+              <h3 style={{ marginTop: 0 }}>Total devices</h3>
+              <p className="device-stat">{deviceDashboard.totalDevices}</p>
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: '24px' }}>
+            <h2 style={{ marginTop: 0 }}>Connected mobile devices</h2>
+            <table className="poi-table">
+              <thead>
+                <tr>
+                  <th>Device</th>
+                  <th>Platform</th>
+                  <th>IP</th>
+                  <th>Last seen</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deviceDashboard.devices.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="poi-table__muted">No device heartbeat received yet.</td>
+                  </tr>
+                ) : deviceDashboard.devices.map((device) => (
+                  <tr key={device.deviceId}>
+                    <td>
+                      <strong>{device.deviceName || 'Unknown device'}</strong>
+                      <div className="poi-table__muted">{device.deviceId}</div>
+                    </td>
+                    <td>{device.platform} / {device.appVersion || 'N/A'}</td>
+                    <td>{device.ipAddress}</td>
+                    <td>{new Date(device.lastSeenAt).toLocaleString()}</td>
+                    <td>
+                      <span className={`status-pill ${device.isOnline ? 'status-pill--active' : 'status-pill--inactive'}`}>
+                        {device.isOnline ? 'Online' : 'Offline'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Most viewed stalls</h2>
+            <table className="poi-table">
+              <thead>
+                <tr>
+                  <th>Stall</th>
+                  <th>Total views</th>
+                  <th>Unique devices</th>
+                  <th>Last viewed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deviceDashboard.topPois.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="poi-table__muted">No stall view statistics yet.</td>
+                  </tr>
+                ) : deviceDashboard.topPois.map((poi) => (
+                  <tr key={poi.poiId}>
+                    <td>{poi.poiName}</td>
+                    <td>{poi.totalViews}</td>
+                    <td>{poi.uniqueDevices}</td>
+                    <td>{poi.lastViewedAt ? new Date(poi.lastViewedAt).toLocaleString() : 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       );
     }
 
