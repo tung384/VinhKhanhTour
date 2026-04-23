@@ -105,9 +105,6 @@ public class OwnerPOIController : ControllerBase
         }
 
         poi.Name = dto.Name;
-        poi.Latitude = dto.Latitude;
-        poi.Longitude = dto.Longitude;
-        poi.DetectionRadius = dto.DetectionRadius;
         poi.MainImage = NormalizeStoredImageUrl(dto.MainImage);
 
         if (poi.Images?.Any() == true)
@@ -208,16 +205,6 @@ public class OwnerPOIController : ControllerBase
 
     private static string? ValidatePoi(OwnerPoiUpdateDto dto)
     {
-        if (dto.Latitude < -90 || dto.Latitude > 90)
-        {
-            return "Latitude must be between -90 and 90.";
-        }
-
-        if (dto.Longitude < -180 || dto.Longitude > 180)
-        {
-            return "Longitude must be between -180 and 180.";
-        }
-
         if (!dto.Translations.Any(t => t.LanguageCode == "vi"))
         {
             return "Vietnamese (vi) translation is required.";

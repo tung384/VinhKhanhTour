@@ -11,6 +11,7 @@ builder.Services.AddScoped<ContentService>();
 builder.Services.AddScoped<LocalFileStorageService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<DeviceTrackingService>();
 
 builder.Services.AddControllers();
 

@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<POIImage> POIImages => Set<POIImage>();
     public DbSet<ContentVersion> ContentVersions => Set<ContentVersion>();
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<DeviceSession> DeviceSessions => Set<DeviceSession>();
+    public DbSet<DevicePoiView> DevicePoiViews => Set<DevicePoiView>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,5 +40,19 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(a => a.PoiId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<DeviceSession>()
+            .HasIndex(d => d.DeviceId)
+            .IsUnique();
+
+        modelBuilder.Entity<DevicePoiView>()
+            .HasIndex(v => new { v.DeviceId, v.PoiId })
+            .IsUnique();
+
+        modelBuilder.Entity<DevicePoiView>()
+            .HasOne(v => v.Poi)
+            .WithMany()
+            .HasForeignKey(v => v.PoiId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

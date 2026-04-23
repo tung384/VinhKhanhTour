@@ -18,6 +18,7 @@ public class DatabaseInitializer
     public async Task InitializeAsync()
     {
         await EnsureAccountsTableAsync();
+        await EnsureDeviceTablesAsync();
         await SeedAdminAsync();
     }
 
@@ -95,5 +96,40 @@ public class DatabaseInitializer
         });
 
         await _context.SaveChangesAsync();
+    }
+
+    private async Task EnsureDeviceTablesAsync()
+    {
+        var deviceSessionsSql = """
+            CREATE TABLE IF NOT EXISTS DeviceSessions (
+                Id INT NOT NULL AUTO_INCREMENT,
+                DeviceId VARCHAR(120) NOT NULL,
+                Platform VARCHAR(40) NOT NULL,
+                DeviceName VARCHAR(255) NOT NULL,
+                AppVersion VARCHAR(40) NOT NULL,
+                IpAddress VARCHAR(100) NOT NULL,
+                FirstSeenAt DATETIME(6) NOT NULL,
+                LastSeenAt DATETIME(6) NOT NULL,
+                CONSTRAINT PK_DeviceSessions PRIMARY KEY (Id),
+                CONSTRAINT UX_DeviceSessions_DeviceId UNIQUE (DeviceId)
+            );
+            """;
+
+        var devicePoiViewsSql = """
+            CREATE TABLE IF NOT EXISTS DevicePoiViews (
+                Id INT NOT NULL AUTO_INCREMENT,
+                DeviceId VARCHAR(120) NOT NULL,
+                PoiId INT NOT NULL,
+                ViewCount INT NOT NULL DEFAULT 0,
+                FirstViewedAt DATETIME(6) NOT NULL,
+                LastViewedAt DATETIME(6) NOT NULL,
+                CONSTRAINT PK_DevicePoiViews PRIMARY KEY (Id),
+                CONSTRAINT UX_DevicePoiViews_DevicePoi UNIQUE (DeviceId, PoiId),
+                CONSTRAINT FK_DevicePoiViews_POIs_PoiId FOREIGN KEY (PoiId) REFERENCES POIs (Id) ON DELETE CASCADE
+            );
+            """;
+
+        await _context.Database.ExecuteSqlRawAsync(deviceSessionsSql);
+        await _context.Database.ExecuteSqlRawAsync(devicePoiViewsSql);
     }
 }

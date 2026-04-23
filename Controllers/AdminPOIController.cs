@@ -199,9 +199,6 @@ public class AdminPOIController : ControllerBase
         if (dto.Longitude < -180 || dto.Longitude > 180)
             return "Longitude must be between -180 and 180.";
 
-        if (!dto.Translations.Any(t => t.LanguageCode == "vi"))
-            return "Vietnamese (vi) translation is required.";
-
         var duplicateLang = dto.Translations
             .GroupBy(t => t.LanguageCode)
             .Any(g => g.Count() > 1);
@@ -210,7 +207,11 @@ public class AdminPOIController : ControllerBase
             return "Duplicate languageCode detected.";
 
         var vi = dto.Translations.FirstOrDefault(t => t.LanguageCode == "vi");
-        if (vi != null && string.IsNullOrWhiteSpace(vi.Description))
+        if (vi != null &&
+            (!string.IsNullOrWhiteSpace(vi.DetailedDescription) ||
+             !string.IsNullOrWhiteSpace(vi.AudioScript) ||
+             !string.IsNullOrWhiteSpace(vi.AudioUrl)) &&
+            string.IsNullOrWhiteSpace(vi.Description))
             return "Vietnamese description cannot be empty.";
 
         var imageCount = BuildNormalizedImageUrls(dto.MainImage, dto.Images.Select(x => x.ImageUrl)).Count();
