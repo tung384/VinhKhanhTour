@@ -9,6 +9,7 @@ public partial class POIDetailPage : ContentPage
 {
     private readonly NarrationService _narrationService;
     private readonly DatabaseService _dbService;
+    private readonly DeviceTelemetryService _deviceTelemetryService;
     private POITranslation? _currentTranslation;
     private bool _shouldAutoPlay;
 
@@ -34,6 +35,7 @@ public partial class POIDetailPage : ContentPage
         InitializeComponent();
         _narrationService = App.GetService<NarrationService>();
         _dbService = App.GetService<DatabaseService>();
+        _deviceTelemetryService = App.GetService<DeviceTelemetryService>();
     }
 
     private async void LoadData(int id)
@@ -47,6 +49,7 @@ public partial class POIDetailPage : ContentPage
         {
             NameLabel.Text = poi.Name;
             await _dbService.AddPOIToHistoryAsync(poi.Id);
+            _ = _deviceTelemetryService.RecordPoiViewAsync(poi.Id);
         }
 
         if (_currentTranslation != null)

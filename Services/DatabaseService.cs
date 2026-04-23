@@ -122,6 +122,46 @@ public class DatabaseService
         return images.Select(x => x.FileName).ToList();
     }
 
+    public async Task<bool> IsContentHealthyAsync()
+    {
+        await Init();
+
+        var pois = await _database!.Table<POI>().ToListAsync();
+        if (pois.Count == 0)
+        {
+            return false;
+        }
+
+        var poiIds = pois.Select(p => p.Id).ToHashSet();
+        var translations = await _database.Table<POITranslation>().ToListAsync();
+
+        if (translations.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var poi in pois)
+        {
+            if (!translations.Any(t => t.POIId == poi.Id))
+            {
+                return false;
+            }
+        }
+
+        if (translations.Any(t => !poiIds.Contains(t.POIId)))
+        {
+            return false;
+        }
+
+        var images = await _database.Table<POIImage>().ToListAsync();
+        if (images.Any(i => !poiIds.Contains(i.POIId)))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task SeedDataAsync()
     {
         if (_database == null) return;

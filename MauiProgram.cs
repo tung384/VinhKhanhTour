@@ -28,6 +28,7 @@ namespace OneSProject
             // CHANGE: register one shared service graph for the offline-first mobile app.
             builder.Services.AddSingleton<DatabaseService>();
             builder.Services.AddSingleton<ApiService>();
+            builder.Services.AddSingleton<DeviceTelemetryService>();
             builder.Services.AddSingleton<SyncService>();
             builder.Services.AddSingleton<NarrationService>();
             builder.Services.AddSingleton<LocationTracker>();

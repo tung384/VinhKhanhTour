@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using OneSProject.Models.DTOs;
 
@@ -9,7 +10,9 @@ public class ApiService
 {
     private readonly HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonOptions;
-    private const string DefaultAndroidEmulatorUrl = "https://10.0.2.2:7164/";
+    private const string DefaultAndroidLanHttpUrl = "http://192.168.247.209:5146/";
+    private const string DefaultAndroidLanHttpsUrl = "https://192.168.247.209:7164/";
+    private const string DefaultAndroidEmulatorUrl = "https://192.168.247.209:7164/";
     private const string DefaultDesktopUrl = "https://localhost:7164/";
 
     public ApiService()
@@ -41,7 +44,7 @@ public class ApiService
         }
 
 #if ANDROID
-        return DefaultAndroidEmulatorUrl;
+        return DefaultAndroidLanHttpUrl;
 #else
         return DefaultDesktopUrl;
 #endif
@@ -58,10 +61,12 @@ public class ApiService
                 using var doc = JsonDocument.Parse(json);
                 return doc.RootElement.GetProperty("version").GetInt32();
             }
+
+            Debug.WriteLine($"[API ERROR] GetVersion returned status {(int)response.StatusCode} from {_httpClient.BaseAddress}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[API ERROR] GetVersion failed: {ex.Message}");
+            Debug.WriteLine($"[API ERROR] GetVersion failed against {_httpClient.BaseAddress}: {ex.Message}");
         }
 
         return 0;
@@ -77,10 +82,12 @@ public class ApiService
                 var json = await response.Content.ReadAsStringAsync();
                 return JsonSerializer.Deserialize<ContentDownloadDto>(json, _jsonOptions);
             }
+
+            Debug.WriteLine($"[API ERROR] DownloadContent returned status {(int)response.StatusCode} from {_httpClient.BaseAddress}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[API ERROR] DownloadContent failed: {ex.Message}");
+            Debug.WriteLine($"[API ERROR] DownloadContent failed against {_httpClient.BaseAddress}: {ex.Message}");
         }
 
         return null;
@@ -95,8 +102,24 @@ public class ApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[API ERROR] DownloadBytes failed for {url}: {ex.Message}");
+            Debug.WriteLine($"[API ERROR] DownloadBytes failed for {url} via {_httpClient.BaseAddress}: {ex.Message}");
             return null;
         }
+    }
+
+    public async Task SendHeartbeatAsync(DeviceHeartbeatDto dto)
+    {
+        var json = JsonSerializer.Serialize(dto, _jsonOptions);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync("api/device/heartbeat", content);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task RecordPoiViewAsync(DevicePoiViewDto dto)
+    {
+        var json = JsonSerializer.Serialize(dto, _jsonOptions);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync("api/device/poi-view", content);
+        response.EnsureSuccessStatusCode();
     }
 }

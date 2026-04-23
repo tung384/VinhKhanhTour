@@ -7,27 +7,31 @@ public class SyncService
 {
     private readonly ApiService _apiService;
     private readonly DatabaseService _dbService;
+    private readonly DeviceTelemetryService _deviceTelemetryService;
     private static readonly string ImageCacheDirectory = Path.Combine(FileSystem.AppDataDirectory, "synced-images");
 
-    public SyncService(ApiService apiService, DatabaseService dbService)
+    public SyncService(ApiService apiService, DatabaseService dbService, DeviceTelemetryService deviceTelemetryService)
     {
         _apiService = apiService;
         _dbService = dbService;
+        _deviceTelemetryService = deviceTelemetryService;
     }
 
     public async Task InitializeAppContentAsync()
     {
         NetworkAccess accessType = Connectivity.Current.NetworkAccess;
-        Debug.WriteLine($"[SYNC SYSTEM] Trạng thái mạng: {accessType}");
+        Debug.WriteLine($"[SYNC SYSTEM] Network access: {accessType}");
 
         if (accessType == NetworkAccess.Internet)
         {
-            Debug.WriteLine("[SYNC SYSTEM] Có kết nối Internet. Khởi động quy trình Sync.");
+            Debug.WriteLine("[SYNC SYSTEM] Internet available. Starting sync.");
+            _deviceTelemetryService.EnsureHeartbeatLoop();
+            await _deviceTelemetryService.SendHeartbeatAsync();
             await RunFullSyncAsync();
         }
         else
         {
-            Debug.WriteLine("[SYNC SYSTEM] Ngoại tuyến. Sử dụng dữ liệu lưu trữ nội bộ.");
+            Debug.WriteLine("[SYNC SYSTEM] Offline. Using local content.");
             await _dbService.Init();
         }
     }
@@ -38,44 +42,48 @@ public class SyncService
         {
             int remoteVersion = await _apiService.GetVersionAsync();
             int localVersion = Preferences.Default.Get("ContentVersion", 0);
+            bool localContentHealthy = await _dbService.IsContentHealthyAsync();
+            Debug.WriteLine($"[SYNC] Evaluating sync. Remote={remoteVersion}, Local={localVersion}, Healthy={localContentHealthy}.");
 
-            if (remoteVersion > localVersion)
+            if (remoteVersion != localVersion || !localContentHealthy)
             {
-                Debug.WriteLine($"[SYNC] Phát hiện phiên bản mới: {remoteVersion}. Đang tải dữ liệu...");
+                Debug.WriteLine($"[SYNC] Re-syncing content. Remote={remoteVersion}, Local={localVersion}, Healthy={localContentHealthy}.");
 
                 var data = await _apiService.DownloadContentAsync();
                 if (data?.POIs != null)
                 {
                     await CacheImagesLocallyAsync(data);
-
-                    // CHANGE: store the backend payload directly into SQLite for offline-first reads.
                     await _dbService.ReplaceContentAsync(data);
-                    var finalPois = await _dbService.GetAllPOIsAsync();
 
+                    var finalPois = await _dbService.GetAllPOIsAsync();
                     Debug.WriteLine("========================================");
-                    Debug.WriteLine("[JARVIS DIAGNOSTIC] Phase 5 Sync Complete");
+                    Debug.WriteLine("[SYNC DIAGNOSTIC] Sync complete");
                     Debug.WriteLine($"[DATABASE] POIs count: {finalPois.Count}");
                     Debug.WriteLine($"[VERSION] System updated to: {data.Version}");
                     Debug.WriteLine("========================================");
 
                     Preferences.Default.Set("ContentVersion", data.Version);
-                    Debug.WriteLine("[SYNC] Đồng bộ hóa thành công.");
+                    Debug.WriteLine("[SYNC] Sync completed successfully.");
+                }
+                else
+                {
+                    Debug.WriteLine("[SYNC ERROR] Download returned no payload. Falling back to local content.");
+                    await _dbService.Init();
                 }
             }
             else
             {
-                Debug.WriteLine("[SYNC] Phiên bản hiện tại đã là mới nhất.");
+                Debug.WriteLine("[SYNC] Local content is already current and healthy.");
                 await _dbService.Init();
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[CRITICAL] Lỗi trong quá trình Sync: {ex.Message}");
+            Debug.WriteLine($"[CRITICAL] Sync failed: {ex.Message}");
             await _dbService.Init();
         }
     }
 
-    // CHANGE: download synced POI images into local app storage and rewrite DTO paths for offline use.
     private async Task CacheImagesLocallyAsync(Models.DTOs.ContentDownloadDto content)
     {
         Directory.CreateDirectory(ImageCacheDirectory);
